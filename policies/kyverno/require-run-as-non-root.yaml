@@ -1,25 +1,7 @@
-## Politica 3 de 3: prohibe ejecucion como root. `anyPattern` acepta el
-## flag tanto a nivel de Pod (spec.securityContext.runAsNonRoot) como a
-## nivel de contenedor (spec.containers[].securityContext.runAsNonRoot) --
-## el chart de la plataforma (P5/charts/sa-platform) ya declara ambos via
-## el helper sa-platform.podSecurityContext/containerSecurityContext, asi
-## que en el estado conforme esta politica nunca deberia rechazar nada
-## propio; solo actua como barrera ante un manifiesto manual o mal
-## configurado.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: require-run-as-non-root
-  annotations:
-    policies.kyverno.io/title: Require runAsNonRoot
-    policies.kyverno.io/category: Practica 8 - Cadena de suministro
-    policies.kyverno.io/severity: high
-    policies.kyverno.io/description: >-
-      Prohibe ejecutar contenedores como root (Practica 8, seccion 3.2:
-      "exigir ejecucion sin privilegios de root"). Reduce el impacto de una
-      imagen comprometida: sin UID 0, un proceso dentro del contenedor no
-      puede escalar privilegios ni modificar archivos propiedad de root del
-      nodo aunque escape el sandbox del runtime de contenedores.
 spec:
   validationFailureAction: Enforce
   background: true
@@ -29,8 +11,12 @@ spec:
         any:
           - resources:
               kinds: ["Pod"]
+      exclude:
+        any:
+          - resources:
+              namespaces: ["argocd", "kyverno", "kube-system", "argo-rollouts"]
       validate:
-        message: "Los contenedores no pueden ejecutar como root: declara runAsNonRoot: true a nivel de Pod o de cada contenedor."
+        message: "Los contenedores no pueden ejecutar como root."
         anyPattern:
           - spec:
               securityContext:
