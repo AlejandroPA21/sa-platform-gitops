@@ -1,0 +1,24 @@
+api-gateway:
+  replicaCount: 1
+  autoscaling:
+    minReplicas: 1
+auth-service:
+  replicaCount: 1
+  autoscaling:
+    minReplicas: 1
+events-service:
+  replicaCount: 1
+  autoscaling:
+    minReplicas: 1
+speakers-service:
+  replicaCount: 1
+  autoscaling:
+    minReplicas: 1
+registration-service:
+  replicaCount: 1
+  autoscaling:
+    minReplicas: 1
+venues-service:
+  replicaCount: 1
+  autoscaling:
+    minReplicas: 1
