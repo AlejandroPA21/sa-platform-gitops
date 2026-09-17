@@ -1,0 +1,66 @@
+## Application "dev": UNICO recurso que ArgoCD reconcilia contra
+## sa-p8-dev. Fuente multiple (ArgoCD >= 2.6): el CHART sigue viviendo en
+## el repo de codigo (P5/charts/sa-platform, sin duplicarlo -- mismo
+## principio que ya aplicaron P6/P7), pero los VALUES que cambian por
+## despliegue (tag de imagen, rollout on/off) vienen del repo de
+## manifiestos INDEPENDIENTE, referenciado como "$values". El pipeline de
+## CI (.github/workflows/p8-gitops-ci.yml) SOLO edita archivos dentro de
+## gitops/values/ del segundo repo -- nunca toca el repo de codigo ni
+## ejecuta un solo comando contra este cluster.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sa-platform-dev
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: sa-platform
+  sources:
+    - repoURL: "https://github.com/AlejandroPA21/Practicas-SA-B-202200329.git"
+      # Rama estable del repo de codigo. El TAG de cada imagen (que si
+      # cambia por release) llega via el segundo source, nunca cambiando
+      # este targetRevision -- el chart en si evoluciona mucho mas lento
+      # que las versiones de imagen que despliega.
+      targetRevision: main
+      path: P5/charts/sa-platform
+      helm:
+        # Fijo (no el default de ArgoCD, que usaria el nombre de la
+        # Application, "sa-platform-dev"): los 10 Secret del chart
+        # (templates/secret*.yaml) y sus SealedSecret equivalentes
+        # (gitops/secrets/) hardcodean nombres de host derivados de
+        # {{ .Release.Name }} (ej. "sa-platform-postgresql"). Cambiar el
+        # release name rompe esas referencias.
+        releaseName: sa-platform
+        valueFiles:
+          # Del PROPIO repo de codigo (valores base del ambiente, ya
+          # existentes desde P5 -- replicas/recursos "chicos" de dev).
+          - values-dev.yaml
+          # Del repo de MANIFIESTOS ($values, ver el 2do source abajo):
+          # el pipeline solo escribe/edita este archivo.
+          - $values/values/values-images-dev.yaml
+          - $values/values/values-rollout.yaml
+    - repoURL: "https://github.com/AlejandroPA21/sa-platform-gitops.git"
+      targetRevision: main
+      path: "."
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sa-p8-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      # false a proposito: el namespace lo crea UNICAMENTE Terraform (con
+      # su ResourceQuota/LimitRange/RBAC ya aplicados) -- si ArgoCD pudiera
+      # crearlo, un Sync antes de `terraform apply` produciria un
+      # namespace sin cuotas ni RBAC durante esa ventana.
+      - CreateNamespace=false
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

@@ -1,0 +1,48 @@
+## Politica 1 de 3 (seccion 3.2 del enunciado, "Kyverno... al menos tres
+## politicas obligatorias: prohibir la etiqueta latest..."). Se matchea
+## contra Pod (no contra Deployment/Rollout/CronJob directamente): todo
+## workload -- venga de un Deployment normal o de un Rollout de Argo --
+## termina creando Pods reales, y son esos Pods los que pasan por el
+## webhook de admision. Esto evita tener que declarar reglas distintas
+## para cada tipo de controlador (incluido el CRD Rollout, que Kyverno no
+## reconoce por defecto para el autogen de politicas de Pod-controller).
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag
+    policies.kyverno.io/category: Practica 8 - Cadena de suministro
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Exige que toda imagen declare un tag explicito y prohibe ':latest'.
+      La Practica 8 exige versionamiento semantico derivado de un tag/release
+      de Git (seccion 3.2 del enunciado) -- 'latest' hace que el mismo
+      manifiesto declarativo pueda resolver a binarios distintos en momentos
+      distintos, lo opuesto a "el repositorio es la unica fuente de verdad".
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-image-tag
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+      validate:
+        message: "Toda imagen debe declarar un tag explicito (repo/imagen:tag)."
+        pattern:
+          spec:
+            containers:
+              - image: "*:*"
+    - name: validate-latest-tag
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+      validate:
+        message: "La etiqueta ':latest' esta prohibida (Practica 8, seccion 3.2). Usa un tag semantico derivado de un release de Git."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"

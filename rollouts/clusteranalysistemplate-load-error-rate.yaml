@@ -1,0 +1,73 @@
+## ClusterAnalysisTemplate "load-error-rate" -- segunda puerta de
+## promocion (weight 50, ver rollout.yaml). Ejecuta una prueba de carga
+## CORTA de k6 contra el Service canary y aplica 2 umbrales: tasa de error
+## HTTP y latencia p95. Si cualquiera de los 2 se incumple, k6 termina con
+## exit code distinto de 0 (comportamiento nativo de `thresholds`, sin
+## flags extra) -> el Job falla -> el AnalysisRun falla -> Argo Rollouts
+## aborta el rollout y revierte al 100% estable.
+##
+## Este gate es deliberadamente MAS CORTO (20s, 10 VUs) que la prueba de
+## carga completa de P8/tests/load/k6-load-test.js (2-5 min, usada para el
+## reporte de carga que pide la rubrica como entregable aparte): aqui el
+## objetivo es una senal rapida de "el canary no se esta cayendo bajo
+## carga minima", no un reporte de capacidad. Los umbrales sí son
+## coherentes entre ambos scripts -- ver
+## P8/docs/ARQUITECTURA_GITOPS.md seccion "Umbrales de promocion".
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterAnalysisTemplate
+metadata:
+  name: load-error-rate
+spec:
+  args:
+    - name: canary-service
+    - name: service-port
+  metrics:
+    - name: k6-canary-thresholds
+      provider:
+        job:
+          spec:
+            backoffLimit: 0
+            activeDeadlineSeconds: 90
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: k6-canary-gate
+                    image: grafana/k6:0.52.0
+                    command: ["sh", "-c"]
+                    args:
+                      - |
+                        set -eu
+                        cat <<'EOF' > /tmp/canary-gate.js
+                        import http from 'k6/http';
+                        import { check } from 'k6';
+
+                        export const options = {
+                          vus: 10,
+                          duration: '20s',
+                          thresholds: {
+                            // Umbral de error: justificado en
+                            // P8/docs/ARQUITECTURA_GITOPS.md -- 5% tolera
+                            // ruido de arranque de un puñado de pods
+                            // canary sin dejar pasar una version
+                            // realmente rota (que en la demo de fallo
+                            // inducido produce ~100% de error).
+                            http_req_failed: ['rate<0.05'],
+                            // p95 < 800ms: el doble del SLA interno
+                            // informal de 400ms observado en la Practica
+                            // 5/6 bajo carga normal, con margen para el
+                            // overhead de tener stable+canary corriendo a
+                            // la vez en el mismo namespace.
+                            http_req_duration: ['p(95)<800'],
+                          },
+                        };
+
+                        export default function () {
+                          const res = http.get(
+                            `http://${__ENV.TARGET_HOST}:${__ENV.TARGET_PORT}/health`
+                          );
+                          check(res, { 'status is 200': (r) => r.status === 200 });
+                        }
+                        EOF
+                        TARGET_HOST="{{args.canary-service}}" TARGET_PORT="{{args.service-port}}" \
+                          k6 run /tmp/canary-gate.js

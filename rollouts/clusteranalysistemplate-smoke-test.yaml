@@ -1,0 +1,60 @@
+## ClusterAnalysisTemplate "smoke-test" -- primera y tercera puerta de
+## promocion de TODOS los Rollout de la plataforma (ver el bloque
+## `strategy.canary.steps` en cada P5/charts/sa-platform/charts/<svc>/templates/rollout.yaml).
+## Cluster-scoped (no AnalysisTemplate namespaced) a proposito: se define
+## una sola vez y la referencian los Rollout tanto de sa-p8-dev como de
+## sa-p8-prod (`clusterScope: true` en cada referencia), sin duplicarla
+## por ambiente.
+##
+## Que valida: que los pods CANARY (nunca los estables -- por eso apunta
+## al Service "<svc>-canary", nunca al Service principal que mezcla
+## ambos) respondan 200 en su endpoint de salud, 5 veces seguidas con 2s
+## de espera entre intentos. Threshold binario (todo o nada) porque un
+## smoke test no mide grados: o el proceso arranco sano detras del nuevo
+## tag de imagen, o no.
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterAnalysisTemplate
+metadata:
+  name: smoke-test
+spec:
+  args:
+    - name: canary-service
+    - name: service-port
+    - name: health-path
+  metrics:
+    - name: smoke-http-200
+      # 5 intentos, sin reintento automatico del propio AnalysisRun
+      # (count: 1): la resiliencia YA la da el bucle `for` dentro del Job.
+      # Si el Job termina con exit distinto de 0, Argo Rollouts marca el
+      # AnalysisRun "Failed" y ABORTA el rollout -- reversion automatica al
+      # 100% de trafico estable, sin intervencion humana (ver
+      # P8/docs/ARQUITECTURA_GITOPS.md, diagrama de secuencia).
+      provider:
+        job:
+          spec:
+            backoffLimit: 0
+            activeDeadlineSeconds: 60
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: smoke-test
+                    image: curlimages/curl:8.10.1
+                    command: ["sh", "-c"]
+                    args:
+                      - |
+                        set -eu
+                        URL="http://{{args.canary-service}}:{{args.service-port}}{{args.health-path}}"
+                        echo "Probing canary: $URL"
+                        i=1
+                        while [ "$i" -le 5 ]; do
+                          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$URL" || echo "000")
+                          echo "intento $i -> HTTP $code"
+                          if [ "$code" != "200" ]; then
+                            echo "FALLO: se esperaba HTTP 200, se obtuvo $code"
+                            exit 1
+                          fi
+                          i=$((i + 1))
+                          sleep 2
+                        done
+                        echo "OK: 5/5 respuestas HTTP 200 del canary"

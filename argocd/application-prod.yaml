@@ -1,0 +1,56 @@
+## Contraparte de application-dev.yaml para sa-p8-prod. Misma estructura;
+## unicas diferencias: values-prod.yaml (recursos/replicas de produccion,
+## ya existente desde P5) y su propio archivo de tags de imagen
+## (values-images-prod.yaml), para poder promover una version a dev sin
+## que eso implique promoverla a prod en el mismo commit -- la promocion
+## dev -> prod es un PR aparte contra el repo de manifiestos (ver
+## P8/docs/GUIA_INSTALACION_CLUSTER.md, seccion "Promocion entre
+## ambientes").
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sa-platform-prod
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: sa-platform
+  sources:
+    - repoURL: "https://github.com/AlejandroPA21/Practicas-SA-B-202200329.git"
+      targetRevision: main
+      path: P5/charts/sa-platform
+      helm:
+        # Ver el comentario equivalente en application-dev.yaml -- mismo
+        # release name en ambos ambientes (namespaces distintos, sin
+        # colision), para que los hostnames que los Secret/SealedSecret
+        # hardcodean sean predecibles.
+        releaseName: sa-platform
+        valueFiles:
+          - values-prod.yaml
+          - $values/values/values-images-prod.yaml
+          - $values/values/values-rollout.yaml
+    - repoURL: "https://github.com/AlejandroPA21/sa-platform-gitops.git"
+      targetRevision: main
+      path: "."
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sa-p8-prod
+  syncPolicy:
+    automated:
+      # prod NO hace selfHeal automatico de forma tan agresiva como dev en
+      # esta demo: se deja prune/selfHeal igual para cumplir "Synced y
+      # Healthy" de la rubrica, pero en un caso real de curso se
+      # documentaria un gate manual adicional (ver
+      # docs/ARQUITECTURA_GITOPS.md, "Limitaciones conocidas").
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

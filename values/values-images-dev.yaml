@@ -1,0 +1,59 @@
+## values-images-dev.yaml -- UNICO archivo que edita el Pull Request
+## automatico del pipeline para el ambiente dev (job "open-gitops-pr" en
+## .github/workflows/p8-gitops-ci.yml, via `yq eval -i
+## '.<servicio>.image.tag = "<TAG>"'`). El tag es siempre el nombre exacto
+## del release de Git que disparo el build (vX.Y.Z) -- nunca "latest"
+## (prohibido ademas por Kyverno, ver gitops/policies/kyverno/disallow-latest-tag.yaml).
+##
+## repository SI incluye el registry completo (ghcr.io/<owner>/<repo>/<svc>,
+## todo en minusculas) en vez de depender de global.imageRegistry: la
+## Practica 6 (docs/VALIDACION_LOCAL.md §2) ya documento por que un
+## global.imageRegistry unico rompe las imagenes de PostgreSQL/RabbitMQ de
+## Bitnami -- se mantiene el mismo patron aqui.
+##
+## Version inicial (placeholder): sustituye "v0.1.0" por el primer tag
+## real que publiques (ver docs/GUIA_INSTALACION_CLUSTER.md paso 6).
+api-gateway:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/api-gateway"
+    tag: "v0.1.0"
+
+auth-service:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/auth-service"
+    tag: "v0.1.0"
+
+events-service:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/events-service"
+    tag: "v0.1.0"
+
+speakers-service:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/speakers-service"
+    tag: "v0.1.0"
+
+registration-service:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/registration-service"
+    tag: "v0.1.0"
+
+venues-service:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/venues-service"
+    tag: "v0.1.0"
+
+summary-consumer:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/summary-consumer"
+    tag: "v0.1.0"
+
+cronjobs:
+  carneLogger:
+    image:
+      repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/carne-logger"
+      tag: "v0.1.0"
+  hourlySummary:
+    image:
+      repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/hourly-summary"
+      tag: "v0.1.0"

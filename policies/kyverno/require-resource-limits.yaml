@@ -1,0 +1,41 @@
+## Politica 2 de 3: exige requests y limits de CPU/memoria en TODO
+## contenedor. Redundante a proposito con LimitRange (P8/terraform, que
+## solo rellena valores por defecto) y con `resources:` en cada
+## values.yaml del chart: Kyverno es la puerta que garantiza que ningun
+## manifiesto declarativo pueda saltarse esto, incluso si alguien edita el
+## repo de manifiestos a mano sin pasar por el pipeline.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resource-limits
+  annotations:
+    policies.kyverno.io/title: Require Resource Requests and Limits
+    policies.kyverno.io/category: Practica 8 - Cadena de suministro
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Todo contenedor debe declarar requests y limits de CPU y memoria.
+      Sin esto, un Pod compromete el presupuesto del namespace (ResourceQuota
+      de P8/terraform) o puede monopolizar el nodo -- inaceptable en un
+      cluster con entrega progresiva, donde stable y canary conviven y
+      consumen recursos simultaneamente.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: validate-resources
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+      validate:
+        message: "Todo contenedor debe declarar spec.resources.requests y spec.resources.limits de cpu y memory."
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  requests:
+                    cpu: "?*"
+                    memory: "?*"
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"

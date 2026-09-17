@@ -1,0 +1,50 @@
+## Contraparte de values-images-dev.yaml para sa-p8-prod. Se actualiza en
+## un PR SEPARADO (promocion manual dev -> prod: el estudiante abre el PR
+## copiando el tag ya validado en dev, ver
+## docs/GUIA_INSTALACION_CLUSTER.md "Promocion entre ambientes") -- el
+## pipeline de CI nunca escribe aqui directamente, solo en
+## values-images-dev.yaml.
+api-gateway:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/api-gateway"
+    tag: "v0.1.0"
+
+auth-service:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/auth-service"
+    tag: "v0.1.0"
+
+events-service:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/events-service"
+    tag: "v0.1.0"
+
+speakers-service:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/speakers-service"
+    tag: "v0.1.0"
+
+registration-service:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/registration-service"
+    tag: "v0.1.0"
+
+venues-service:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/venues-service"
+    tag: "v0.1.0"
+
+summary-consumer:
+  image:
+    repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/summary-consumer"
+    tag: "v0.1.0"
+
+cronjobs:
+  carneLogger:
+    image:
+      repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/carne-logger"
+      tag: "v0.1.0"
+  hourlySummary:
+    image:
+      repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/hourly-summary"
+      tag: "v0.1.0"

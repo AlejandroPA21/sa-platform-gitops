@@ -1,0 +1,54 @@
+## AppProject: acota lo que CUALQUIER Application de esta plataforma puede
+## hacer, incluso si alguien crea una Application nueva a mano en el
+## cluster. Sin esto, el AppProject "default" de ArgoCD permite desplegar
+## desde cualquier repo hacia cualquier namespace -- lo opuesto al
+## principio de "unica fuente de verdad" que pide el enunciado.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: sa-platform
+  namespace: argocd
+spec:
+  description: >-
+    Practica 8 - Plataforma sa-platform. Unico proyecto autorizado a
+    desplegar en los namespaces sa-p8-dev/sa-p8-prod, y unicamente desde
+    los 2 repositorios de esta practica (codigo + manifiestos).
+  sourceRepos:
+    # Repo de codigo (chart de Helm + el resto de P1-P8). Reemplaza
+    # AlejandroPA21 si forkeaste/moviste el repo a otra cuenta.
+    - "https://github.com/AlejandroPA21/Practicas-SA-B-202200329.git"
+    # Repo de manifiestos, independiente y publico (seccion 3.2 del
+    # enunciado). Crealo vacio en GitHub y sustituye AlejandroPA21 aqui una
+    # vez que definas su URL real -- ver P8/docs/GUIA_INSTALACION_CLUSTER.md.
+    - "https://github.com/AlejandroPA21/sa-platform-gitops.git"
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: sa-p8-dev
+    - server: https://kubernetes.default.svc
+      namespace: sa-p8-prod
+  # Solo estos 2 tipos de recurso CLUSTER-SCOPED (ClusterAnalysisTemplate
+  # de Argo Rollouts, ClusterPolicy de Kyverno) -- ver
+  # application-platform.yaml. Todo lo demas que este proyecto puede tocar
+  # es namespaced (namespaceResourceWhitelist, abajo).
+  clusterResourceWhitelist:
+    - group: "argoproj.io"
+      kind: "ClusterAnalysisTemplate"
+    - group: "kyverno.io"
+      kind: "ClusterPolicy"
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: "*"
+    - group: "apps"
+      kind: "*"
+    - group: "batch"
+      kind: "*"
+    - group: "networking.k8s.io"
+      kind: "*"
+    - group: "policy"
+      kind: "*"
+    - group: "autoscaling"
+      kind: "*"
+    - group: "argoproj.io"
+      kind: "*"
+    - group: "bitnami.com"
+      kind: "*"

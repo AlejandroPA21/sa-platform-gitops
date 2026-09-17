@@ -1,0 +1,36 @@
+## Application "platform": recursos CLUSTER-SCOPED, compartidos por
+## dev y prod (no tiene sentido duplicarlos por namespace) -- las 3
+## ClusterPolicy de Kyverno y los 2 ClusterAnalysisTemplate de Argo
+## Rollouts. Se sincroniza ANTES que las Application de datos/app (sync
+## wave -2): las politicas de Kyverno deben existir antes de que el
+## primer Pod de sa-platform-dev/prod pida ser admitido, y los
+## ClusterAnalysisTemplate deben existir antes de que el primer Rollout
+## intente referenciarlos en su primer paso de canary.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sa-platform-platform
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: sa-platform
+  sources:
+    - repoURL: "https://github.com/AlejandroPA21/sa-platform-gitops.git"
+      targetRevision: main
+      path: policies/kyverno
+    - repoURL: "https://github.com/AlejandroPA21/sa-platform-gitops.git"
+      targetRevision: main
+      path: rollouts
+  destination:
+    server: https://kubernetes.default.svc
+    # Cluster-scoped: el namespace es solo el default administrativo de
+    # ArgoCD para esta Application, ningun recurso de aqui lo usa
+    # realmente.
+    namespace: sa-p8-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false

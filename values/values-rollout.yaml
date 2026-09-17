@@ -1,0 +1,50 @@
+## values-rollout.yaml -- activa Argo Rollouts (Deployment -> Rollout,
+## ver P5/charts/.../templates/rollout.yaml) para los 6 servicios HTTP de
+## la plataforma. Compartido por dev y prod (mismo archivo referenciado
+## por ambas Application, ver argocd/application-{dev,prod}.yaml) porque
+## la decision de "este servicio usa canary" es arquitectonica, no
+## depende del ambiente -- lo que si difiere por ambiente son los pesos
+## (rollout.steps.*) si en algun momento se quisieran ajustar por
+## separado, cosa que hoy no se necesita.
+##
+## summary-consumer y el worker de registration-service quedan FUERA a
+## proposito: son consumidores de RabbitMQ, no reciben trafico HTTP, y un
+## AnalysisTemplate basado en "responde 200 en /health" no dice nada util
+## sobre si estan procesando mensajes correctamente. Ver
+## docs/ARQUITECTURA_GITOPS.md, seccion "Que si tiene canary y que no".
+global:
+  # Secret tipo kubernetes.io/dockerconfigjson para pull de las 9 imagenes
+  # privadas desde ghcr.io. Se aplica como SealedSecret (nunca en texto
+  # plano), ver P8/docs/GUIA_INSTALACION_CLUSTER.md pasos 9-11.
+  imagePullSecrets:
+    - name: ghcr-pull-secret
+  secrets:
+    # El chart deja de renderizar sus propios Secret (DB/JWT/RabbitMQ) --
+    # los 10 equivalentes cifrados viven en gitops/secrets/*.sealed.yaml.
+    # Ver P5/charts/sa-platform/values.yaml (default false) y
+    # P8/docs/GUIA_INSTALACION_CLUSTER.md pasos 9-11 para el flujo completo.
+    managedExternally: true
+
+api-gateway:
+  rollout:
+    enabled: true
+
+auth-service:
+  rollout:
+    enabled: true
+
+events-service:
+  rollout:
+    enabled: true
+
+speakers-service:
+  rollout:
+    enabled: true
+
+registration-service:
+  rollout:
+    enabled: true
+
+venues-service:
+  rollout:
+    enabled: true
