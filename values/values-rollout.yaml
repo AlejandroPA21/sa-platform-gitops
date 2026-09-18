@@ -25,6 +25,11 @@ global:
     # P8/docs/GUIA_INSTALACION_CLUSTER.md pasos 9-11 para el flujo completo.
     managedExternally: true
 
+resourceQuota:
+  enabled: false
+limitRange:
+  enabled: false
+
 api-gateway:
   rollout:
     enabled: true
