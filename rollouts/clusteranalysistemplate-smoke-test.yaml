@@ -54,10 +54,17 @@ spec:
                 # rechaza -- el AnalysisRun nunca llega a probar el canary, se
                 # queda en "Error" (5 errores de admision consecutivos) y
                 # Argo Rollouts aborta como si el canary hubiera fallado de
-                # verdad. curlimages/curl ya corre como UID no-root (100) por
-                # defecto en su propia imagen.
+                # verdad. curlimages/curl SI corre como no-root por defecto,
+                # pero declara ese usuario con un nombre simbolico
+                # ("curl_user"), no un UID numerico -- el kubelet no puede
+                # verificar "no-root" contra un nombre y rechaza el
+                # contenedor directamente ("cannot verify user is
+                # non-root"), incluso con runAsNonRoot: true puesto.
+                # runAsUser explicito (100, el UID real de curl_user en
+                # esta imagen) resuelve la ambiguedad.
                 securityContext:
                   runAsNonRoot: true
+                  runAsUser: 100
                 containers:
                   - name: smoke-test
                     image: curlimages/curl:8.10.1
