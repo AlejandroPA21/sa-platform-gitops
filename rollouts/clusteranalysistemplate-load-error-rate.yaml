@@ -35,10 +35,15 @@ spec:
                 # Kyverno rechaza el Job (require-resource-limits /
                 # require-run-as-non-root) antes de que k6 llegue a probar el
                 # canary, y el AnalysisRun queda en "Error" en vez de medir de
-                # verdad. La imagen oficial de grafana/k6 ya corre como
-                # UID no-root por defecto.
+                # verdad. La imagen oficial de grafana/k6 SI corre como
+                # no-root por defecto, pero con un nombre simbolico ("k6"),
+                # no un UID numerico -- mismo problema exacto que
+                # curl_user en smoke-test.yaml. runAsUser: 12345 es el UID
+                # real de ese usuario dentro de la imagen (confirmado
+                # corriendo el Job a mano).
                 securityContext:
                   runAsNonRoot: true
+                  runAsUser: 12345
                 containers:
                   - name: k6-canary-gate
                     image: grafana/k6:0.52.0
