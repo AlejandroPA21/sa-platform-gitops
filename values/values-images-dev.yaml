@@ -16,37 +16,37 @@
 api-gateway:
   image:
     repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/api-gateway"
-    tag: "v0.2.1"
+    tag: "v0.2.2"
 auth-service:
   image:
     repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/auth-service"
-    tag: "v0.2.1"
+    tag: "v0.2.2"
 events-service:
   image:
     repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/events-service"
-    tag: "v0.2.1"
+    tag: "v0.2.2"
 speakers-service:
   image:
     repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/speakers-service"
-    tag: "v0.2.1"
+    tag: "v0.2.2"
 registration-service:
   image:
     repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/registration-service"
-    tag: "v0.2.1"
+    tag: "v0.2.2"
 venues-service:
   image:
     repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/venues-service"
-    tag: "v0.2.1"
+    tag: "v0.2.2"
 summary-consumer:
   image:
     repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/summary-consumer"
-    tag: "v0.2.1"
+    tag: "v0.2.2"
 cronjobs:
   carneLogger:
     image:
       repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/carne-logger"
-      tag: "v0.2.1"
+      tag: "v0.2.2"
   hourlySummary:
     image:
       repository: "ghcr.io/alejandropa21/practicas-sa-b-202200329/hourly-summary"
-      tag: "v0.2.1"
+      tag: "v0.2.2"
