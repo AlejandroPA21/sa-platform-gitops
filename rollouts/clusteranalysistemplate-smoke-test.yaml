@@ -37,10 +37,28 @@ spec:
             template:
               spec:
                 restartPolicy: Never
+                # Practica 8: sin esto, el propio Job de analisis viola las
+                # politicas "require-resource-limits"/"require-run-as-non-root"
+                # (aplican a TODO Pod en sa-p8-dev/prod, incluidos los Jobs que
+                # el canario usa para validarse a si mismo) y Kyverno lo
+                # rechaza -- el AnalysisRun nunca llega a probar el canary, se
+                # queda en "Error" (5 errores de admision consecutivos) y
+                # Argo Rollouts aborta como si el canary hubiera fallado de
+                # verdad. curlimages/curl ya corre como UID no-root (100) por
+                # defecto en su propia imagen.
+                securityContext:
+                  runAsNonRoot: true
                 containers:
                   - name: smoke-test
                     image: curlimages/curl:8.10.1
                     command: ["sh", "-c"]
+                    resources:
+                      requests:
+                        cpu: "25m"
+                        memory: "32Mi"
+                      limits:
+                        cpu: "100m"
+                        memory: "64Mi"
                     args:
                       - |
                         set -eu

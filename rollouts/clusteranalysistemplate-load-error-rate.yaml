@@ -31,10 +31,25 @@ spec:
             template:
               spec:
                 restartPolicy: Never
+                # Practica 8: mismo motivo que en smoke-test.yaml -- sin esto
+                # Kyverno rechaza el Job (require-resource-limits /
+                # require-run-as-non-root) antes de que k6 llegue a probar el
+                # canary, y el AnalysisRun queda en "Error" en vez de medir de
+                # verdad. La imagen oficial de grafana/k6 ya corre como
+                # UID no-root por defecto.
+                securityContext:
+                  runAsNonRoot: true
                 containers:
                   - name: k6-canary-gate
                     image: grafana/k6:0.52.0
                     command: ["sh", "-c"]
+                    resources:
+                      requests:
+                        cpu: "50m"
+                        memory: "64Mi"
+                      limits:
+                        cpu: "200m"
+                        memory: "128Mi"
                     args:
                       - |
                         set -eu
