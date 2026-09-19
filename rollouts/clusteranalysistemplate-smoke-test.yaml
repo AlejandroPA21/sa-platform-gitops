@@ -29,6 +29,16 @@ spec:
       # AnalysisRun "Failed" y ABORTA el rollout -- reversion automatica al
       # 100% de trafico estable, sin intervencion humana (ver
       # P8/docs/ARQUITECTURA_GITOPS.md, diagrama de secuencia).
+      #
+      # Practica 8: initialDelay evita una carrera real observada en la
+      # demo -- Argo Rollouts dispara este Job justo al fijar el nuevo
+      # weight, sin esperar a que el pod canary recien creado termine de
+      # arrancar. Sin este respiro, el primer intento del bucle de abajo
+      # puede caer en el pod todavia "ContainerCreating"/sin pasar su
+      # readinessProbe, cuenta como 1 fallo, y con failureLimit=0 (umbral
+      # binario, a proposito) eso aborta el rollout aunque el canario este
+      # sano un instante despues.
+      initialDelay: 15s
       provider:
         job:
           spec:
