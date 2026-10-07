@@ -2,12 +2,19 @@
 ## Terraform aplica a mano (P9/terraform/bootstrap-app.tf); todo lo
 ## demas listado abajo lo sincroniza ArgoCD solo.
 ##
-## Se publica en la RAIZ del repo de manifiestos (fuera de la carpeta
-## "argocd/") a proposito: su `source.path` administra el CONTENIDO de
-## "argocd/" (los 6 manifiestos que ya existian desde Practica 8 --
-## AppProject + 5 Application -- sin modificar ninguno), pero nunca se
-## administra a si mismo. Si este archivo viviera DENTRO de "argocd/",
-## ArgoCD intentaria hacer prune de su propia Application en cada sync.
+## Se publica en su PROPIA carpeta "bootstrap/" -- nunca dentro de
+## "argocd/" (que es justo lo que este recurso administra: si viviera
+## ahi, ArgoCD intentaria hacer prune de su propia Application en cada
+## sync) NI en la raiz del repo (como se intento al principio): la raiz
+## tambien esta descartada porque application-dev.yaml/application-prod.yaml
+## usan un segundo source con `path: "."` + `ref: values` sobre ESTE
+## MISMO repo para resolver los values files -- ArgoCD igual escanea esa
+## ruta en busca de manifiestos aunque solo se use como referencia de
+## values, así que cualquier YAML en la raiz (incluido este) terminaba
+## evaluado tambien como parte del sync de sa-platform-dev/prod, y
+## rechazado por el AppProject "sa-platform" (namespace "argocd" no esta
+## en su lista de destinos permitidos). "bootstrap/" no lo escanea nada
+## mas en todo el repo.
 ##
 ## project: default (no "sa-platform"): este recurso lo aplica
 ## Terraform ANTES de que exista el AppProject "sa-platform" -- que se
