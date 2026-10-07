@@ -1,0 +1,49 @@
+## Raiz del patron app-of-apps (Practica 9). UNICO manifiesto que
+## Terraform aplica a mano (P9/terraform/bootstrap-app.tf); todo lo
+## demas listado abajo lo sincroniza ArgoCD solo.
+##
+## Se publica en la RAIZ del repo de manifiestos (fuera de la carpeta
+## "argocd/") a proposito: su `source.path` administra el CONTENIDO de
+## "argocd/" (los 6 manifiestos que ya existian desde Practica 8 --
+## AppProject + 5 Application -- sin modificar ninguno), pero nunca se
+## administra a si mismo. Si este archivo viviera DENTRO de "argocd/",
+## ArgoCD intentaria hacer prune de su propia Application en cada sync.
+##
+## project: default (no "sa-platform"): este recurso lo aplica
+## Terraform ANTES de que exista el AppProject "sa-platform" -- que se
+## crea recien cuando el propio Sync de este root app aplica
+## argocd/project.yaml. Usar el proyecto "default" (siempre existe en
+## cualquier instalacion de ArgoCD) evita esa dependencia circular. Las
+## 5 Application hijas si declaran `project: sa-platform` (heredado sin
+## cambios de Practica 8) y quedan acotadas a lo que ese AppProject
+## permite -- este root app es el UNICO recurso de la practica con
+## alcance sin restringir, y su unico trabajo es aplicar los 6 archivos
+## de "argocd/", nada mas.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sa-platform-root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/AlejandroPA21/sa-platform-gitops.git"
+    targetRevision: main
+    path: argocd
+    directory:
+      recurse: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

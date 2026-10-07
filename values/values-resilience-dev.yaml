@@ -1,0 +1,32 @@
+## Practica 9 -- unico values nuevo que agrega esta practica al repo de
+## manifiestos (se suma al final de valueFiles en argocd/application-dev.yaml,
+## no reemplaza ni reordena ninguno de los que ya usaba Practica 8).
+##
+## Opt-in de Velero Node Agent (Kopia) para el volumen de datos de
+## PostgreSQL: la anotacion le dice al agente de Velero QUE volumen del
+## Pod respaldar/restaurar a nivel de contenido (no solo el PVC vacio).
+## "data" es el nombre del volumen que el propio chart de Bitnami monta
+## para el PGDATA -- verificalo una vez con
+## `kubectl get pod <pod-postgresql-0> -n sa-p8-dev -o jsonpath='{.spec.volumes[*].name}'`
+## antes de la primera prueba de restauracion (ver
+## P9/docs/RUNBOOK_RECUPERACION.md seccion 3).
+postgresql:
+  primary:
+    podAnnotations:
+      backup.velero.io/backup-volumes: data
+
+## IMPORTANTE: values-capacity-dev.yaml (Practica 8, aplicado ANTES que
+## este archivo en argocd/application-dev.yaml) fuerza replicaCount: 1 en
+## los 6 servicios por limite de capacidad del cluster de laboratorio --
+## con 1 sola replica, la prueba de perdida de nodo
+## (P9/scripts/dr-drill-node-loss.sh) no demostraria nada: no hay una
+## segunda replica a la que el trafico pueda seguir yendo mientras se
+## drena el nodo de la primera. Este archivo se aplica DESPUES (ultimo en
+## valueFiles) y le devuelve 2 replicas solo a auth-service -- el unico
+## servicio que la prueba observa -- sin tocar los otros 5, para no
+## rebasar la ResourceQuota de sa-p8-dev (P8/terraform/variables.tf:
+## requests.cpu=3, holgura de sobra para 1 pod extra de ~50m/96Mi).
+auth-service:
+  replicaCount: 2
+  autoscaling:
+    minReplicas: 2

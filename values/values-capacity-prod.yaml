@@ -1,23 +1,32 @@
+## Contraparte de values-capacity-dev.yaml para sa-p8-prod -- mismo
+## motivo: el cluster de esta practica no tiene CPU asignable suficiente
+## para correr dev Y prod con replicas de sobra a la vez (ver el
+## comentario completo en values-capacity-dev.yaml).
 api-gateway:
   replicaCount: 1
   autoscaling:
     minReplicas: 1
+
 auth-service:
   replicaCount: 1
   autoscaling:
     minReplicas: 1
+
 events-service:
   replicaCount: 1
   autoscaling:
     minReplicas: 1
+
 speakers-service:
   replicaCount: 1
   autoscaling:
     minReplicas: 1
+
 registration-service:
   replicaCount: 1
   autoscaling:
     minReplicas: 1
+
 venues-service:
   replicaCount: 1
   autoscaling:

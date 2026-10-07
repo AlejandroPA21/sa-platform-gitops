@@ -40,6 +40,15 @@ spec:
           # el pipeline solo escribe/edita este archivo.
           - $values/values/values-images-dev.yaml
           - $values/values/values-rollout.yaml
+          # Ultimo (gana sobre replicaCount/autoscaling de arriba):
+          # ajuste de capacidad especifico de este cluster, ver el
+          # comentario en el propio archivo.
+          - $values/values/values-capacity-dev.yaml
+          # Practica 9: opt-in de respaldo de Velero para el volumen de
+          # PostgreSQL (clave nueva, "postgresql.primary.podAnnotations",
+          # no pisa nada de los archivos anteriores). Ver
+          # P9/gitops/values/values-resilience-dev.yaml.
+          - $values/values/values-resilience-dev.yaml
     - repoURL: "https://github.com/AlejandroPA21/sa-platform-gitops.git"
       targetRevision: main
       path: "."
@@ -47,6 +56,26 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: sa-p8-dev
+  # Practica 8: el HPA de cada servicio (autoscaling.minReplicas/maxReplicas,
+  # ver P5/charts/.../values.yaml) ajusta spec.replicas del Rollout por su
+  # cuenta -- sin esto, ArgoCD compara ese campo contra el valor estatico
+  # de git y queda "OutOfSync" para siempre, aunque el sync haya
+  # funcionado perfecto (loop: sync -> HPA lo cambia -> OutOfSync otra vez).
+  ignoreDifferences:
+    - group: argoproj.io
+      kind: Rollout
+      jsonPointers:
+        - /spec/replicas
+        # El CRD de Argo Rollouts instalado tiene un schema incompleto
+        # para spec.template.metadata.annotations -- Kubernetes las
+        # descarta silenciosamente al guardar el objeto (confirmado via
+        # el Diff de la UI de ArgoCD), por lo que checksum/config y
+        # checksum/secret nunca llegan a existir en el objeto vivo aunque
+        # el chart si las declare. Efecto real (no solo cosmetico): un
+        # cambio de ConfigMap/Secret SIN cambiar el tag de imagen no
+        # reinicia el pod solo, a diferencia de P5 con Deployment. Ver
+        # docs/ARQUITECTURA_GITOPS.md, "Limitaciones conocidas".
+        - /spec/template/metadata/annotations
   syncPolicy:
     automated:
       prune: true
@@ -57,7 +86,12 @@ spec:
       # crearlo, un Sync antes de `terraform apply` produciria un
       # namespace sin cuotas ni RBAC durante esa ventana.
       - CreateNamespace=false
-      - ServerSideApply=true
+      # Practica 8: NO ServerSideApply=true -- el CRD Rollout de Argo
+      # Rollouts no publica un schema OpenAPI completo para
+      # spec.template.metadata.annotations, y el apply tipado/server-side
+      # de Kubernetes es estricto con eso ("field not declared in
+      # schema"). El apply "clasico" (3-way merge por
+      # last-applied-configuration) no tiene ese problema.
     retry:
       limit: 5
       backoff:

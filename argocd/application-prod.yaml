@@ -29,6 +29,7 @@ spec:
           - values-prod.yaml
           - $values/values/values-images-prod.yaml
           - $values/values/values-rollout.yaml
+          - $values/values/values-capacity-prod.yaml
     - repoURL: "https://github.com/AlejandroPA21/sa-platform-gitops.git"
       targetRevision: main
       path: "."
@@ -36,6 +37,15 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: sa-p8-prod
+  # Ver el comentario equivalente en application-dev.yaml -- el HPA
+  # maneja spec.replicas del Rollout, ArgoCD no debe compararlo contra git.
+  ignoreDifferences:
+    - group: argoproj.io
+      kind: Rollout
+      jsonPointers:
+        - /spec/replicas
+        # Ver el comentario equivalente en application-dev.yaml.
+        - /spec/template/metadata/annotations
   syncPolicy:
     automated:
       # prod NO hace selfHeal automatico de forma tan agresiva como dev en
@@ -47,7 +57,8 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=false
-      - ServerSideApply=true
+      # Ver el comentario equivalente en application-dev.yaml -- sin
+      # ServerSideApply=true (rompe con el CRD Rollout de Argo Rollouts).
     retry:
       limit: 5
       backoff:

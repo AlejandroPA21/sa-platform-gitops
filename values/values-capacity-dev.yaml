@@ -1,23 +1,45 @@
+## values-capacity-dev.yaml -- SOLO para sa-p8-dev (no lo referencia
+## application-prod.yaml). El cluster GKE de esta practica (4 nodos) no
+## tiene CPU asignable suficiente para 2 replicas x 6 servicios HTTP +
+## ArgoCD + Kyverno + Argo Rollouts + Sealed Secrets corriendo a la vez
+## -- los pods de la segunda replica quedaban en Pending
+## ("Insufficient cpu", ver Events del pod). Con Argo Rollouts activo
+## (values-rollout.yaml), 1 replica estable sigue siendo suficiente para
+## demostrar el canary completo: durante una promocion, el Rollout igual
+## crea un pod adicional temporal para el canary, nunca necesita 2
+## estables simultaneas en reposo.
+##
+## Deliberadamente en un archivo APARTE de values-rollout.yaml (no
+## mezclar "este servicio usa canary", que es una decision
+## arquitectonica compartida por dev/prod, con "cuantas replicas caben
+## en ESTE cluster", que es una limitacion de capacidad especifica de
+## dev). Si en algun momento sa-p8-prod tambien corre sin capacidad para
+## 2 replicas, se necesitara un values-capacity-prod.yaml propio.
 api-gateway:
   replicaCount: 1
   autoscaling:
     minReplicas: 1
+
 auth-service:
   replicaCount: 1
   autoscaling:
     minReplicas: 1
+
 events-service:
   replicaCount: 1
   autoscaling:
     minReplicas: 1
+
 speakers-service:
   replicaCount: 1
   autoscaling:
     minReplicas: 1
+
 registration-service:
   replicaCount: 1
   autoscaling:
     minReplicas: 1
+
 venues-service:
   replicaCount: 1
   autoscaling:

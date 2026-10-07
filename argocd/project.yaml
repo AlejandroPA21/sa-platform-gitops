@@ -52,3 +52,13 @@ spec:
       kind: "*"
     - group: "bitnami.com"
       kind: "*"
+    # Role/RoleBinding namespaced que el chart crea por cada
+    # microservicio (P5/charts/sa-platform/charts/<svc>/templates/role.yaml,
+    # rolebinding.yaml) -- ClusterRole/ClusterRoleBinding NO estan aqui a
+    # proposito: el chart nunca los crea, y si algun dia lo hiciera,
+    # deberia rechazarse (recurso cluster-scoped fuera de los 2
+    # explicitamente permitidos arriba).
+    - group: "rbac.authorization.k8s.io"
+      kind: "Role"
+    - group: "rbac.authorization.k8s.io"
+      kind: "RoleBinding"

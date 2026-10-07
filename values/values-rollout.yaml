@@ -25,6 +25,17 @@ global:
     # P8/docs/GUIA_INSTALACION_CLUSTER.md pasos 9-11 para el flujo completo.
     managedExternally: true
 
+## Practica 8: el chart (P5) ya crea su propio ResourceQuota/LimitRange
+## via Helm, con el mismo nombre "sa-platform-limits"/"sa-platform-quota"
+## que usa el ResourceQuota/LimitRange de P8/terraform. Con ArgoCD
+## resincronizando el chart, el de Helm (que trae fijo el presupuesto de
+## laboratorio de P5 -- 512Mi max por contenedor) siempre termina
+## pisando al de Terraform (que en prod pide 1Gi) -- esto bloqueaba a
+## postgresql en sa-p8-prod ("maximum memory usage per Container is
+## 512Mi, but limit is 600Mi"). El enunciado de P8 pide que sea Terraform
+## quien controle esto (seccion 3.2, "Infraestructura como codigo"), asi
+## que se desactivan aqui las versiones del chart -- Terraform queda como
+## unico dueno, en ambos ambientes.
 resourceQuota:
   enabled: false
 limitRange:
