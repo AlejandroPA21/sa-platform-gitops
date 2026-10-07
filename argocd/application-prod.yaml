@@ -32,7 +32,9 @@ spec:
           - $values/values/values-capacity-prod.yaml
     - repoURL: "https://github.com/AlejandroPA21/sa-platform-gitops.git"
       targetRevision: main
-      path: "."
+      # Ver el comentario equivalente en application-dev.yaml -- sin
+      # "path" (antes 'path: "."'), que hacia que la raiz del repo se
+      # escaneara como source de manifiestos por derecho propio.
       ref: values
   destination:
     server: https://kubernetes.default.svc

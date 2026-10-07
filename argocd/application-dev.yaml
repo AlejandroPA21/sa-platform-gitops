@@ -51,7 +51,15 @@ spec:
           - $values/values/values-resilience-dev.yaml
     - repoURL: "https://github.com/AlejandroPA21/sa-platform-gitops.git"
       targetRevision: main
-      path: "."
+      # Practica 9: SIN "path" (antes tenia 'path: "."'). Un source cuyo
+      # unico proposito es servir de referencia de values ($values/...
+      # arriba) no debe declarar ademas un path real -- con 'path: "."'
+      # ArgoCD seguia escaneando la raiz del repo como un source de
+      # manifiestos valido por derecho propio, y cualquier YAML ahi
+      # (ej. el root-app.yaml que P9 agrego) se colaba en el plan de
+      # sync de ESTA Application, siendo rechazado por el AppProject
+      # "sa-platform" (namespace "argocd" no es un destino permitido).
+      # Ver P9/docs/DECISIONES-P9.md seccion 11.
       ref: values
   destination:
     server: https://kubernetes.default.svc
