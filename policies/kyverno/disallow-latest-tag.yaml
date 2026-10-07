@@ -36,11 +36,14 @@ spec:
       # GitOps. Sin esta exclusion, borrar y dejar que se recree un pod
       # del propio ArgoCD (ej. argocd-application-controller) puede
       # quedar bloqueado por su propia politica -- exactamente el
-      # incidente documentado en docs/DECISIONES-P8.md.
+      # incidente documentado en docs/DECISIONES-P8.md. "velero"
+      # (Practica 9) se agrego por el mismo motivo: su propio Job interno
+      # "velero-upgrade-crds" no declara resources/runAsNonRoot (no lo
+      # controla este repo) y quedaba bloqueado en cada instalacion.
       exclude:
         any:
           - resources:
-              namespaces: ["argocd", "kyverno", "kube-system", "argo-rollouts"]
+              namespaces: ["argocd", "kyverno", "kube-system", "argo-rollouts", "velero"]
       validate:
         message: "Toda imagen debe declarar un tag explicito (repo/imagen:tag)."
         pattern:
@@ -55,7 +58,7 @@ spec:
       exclude:
         any:
           - resources:
-              namespaces: ["argocd", "kyverno", "kube-system", "argo-rollouts"]
+              namespaces: ["argocd", "kyverno", "kube-system", "argo-rollouts", "velero"]
       validate:
         message: "La etiqueta ':latest' esta prohibida (Practica 8, seccion 3.2). Usa un tag semantico derivado de un release de Git."
         pattern:

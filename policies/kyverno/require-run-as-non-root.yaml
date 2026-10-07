@@ -34,7 +34,7 @@ spec:
       exclude:
         any:
           - resources:
-              namespaces: ["argocd", "kyverno", "kube-system", "argo-rollouts"]
+              namespaces: ["argocd", "kyverno", "kube-system", "argo-rollouts", "velero"]
       validate:
         message: "Los contenedores no pueden ejecutar como root: declara runAsNonRoot: true a nivel de Pod o de cada contenedor."
         anyPattern:

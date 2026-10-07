@@ -32,7 +32,7 @@ spec:
       exclude:
         any:
           - resources:
-              namespaces: ["argocd", "kyverno", "kube-system", "argo-rollouts"]
+              namespaces: ["argocd", "kyverno", "kube-system", "argo-rollouts", "velero"]
       validate:
         message: "Todo contenedor debe declarar spec.resources.requests y spec.resources.limits de cpu y memory."
         pattern:
